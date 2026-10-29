@@ -2,7 +2,12 @@
 set -Eeuo pipefail
 trap 'printf "Bootstrap failed at line %s\n" "$LINENO" >&2' ERR
 repo_dir="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-: "${HOME:?HOME must be set}"
+# Explicit target paths avoid silently installing into a preparation user's home.
+target_home="${AGENT_SETUP_HOME:-${HOME:?HOME must be set}}"
+target_codex_home="${AGENT_SETUP_CODEX_HOME:-${CODEX_HOME:-$target_home/.codex}}"
+printf 'Installer uid=%s caller_HOME=%s caller_CODEX_HOME=%s target_HOME=%s target_CODEX_HOME=%s\n' "$(id -u)" "$HOME" "${CODEX_HOME:-unset}" "$target_home" "$target_codex_home"
+export HOME="$target_home"
+export CODEX_HOME="$target_codex_home"
 [[ "$HOME" = /* && "$HOME" != / ]] || { echo "HOME must be an absolute user directory" >&2; exit 1; }
 codex_home="${CODEX_HOME:-$HOME/.codex}"
 [[ "$codex_home" = /* ]] || { echo "CODEX_HOME must be absolute" >&2; exit 1; }
@@ -43,3 +48,6 @@ for agent in shared claude; do
 done
 printf 'Installed instructions and skills for Codex and Claude.\n'
 if [[ -n "$backup_dir" ]]; then printf 'Previous files backed up to %s\n' "$backup_dir"; fi
+
+# Verify bytes, not just directory existence, before claiming success.
+bash "$repo_dir/verify.sh"
