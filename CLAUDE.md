@@ -51,9 +51,9 @@ Before completing a task:
 
 ## UI Verification
 
-- When needed, use the available Playwright skill to verify UI changes in a browser (headless with `PW_HEADLESS=true`).
-- Check relevant viewport sizes, interactions, browser errors, and visual issues. Fix problems found.
-- Report what was verified and any limitations.
+- Use the available Playwright skill for substantial UI changes, and at the end of a project or major feature that affects the UI. Run it headlessly with `PW_HEADLESS=true`.
+- For small or routine changes, do not invoke Playwright automatically; use judgment based on the change and its risk. Verify earlier when needed to resolve uncertainty, investigate a problem, or when the user requests browser testing.
+- When using Playwright, check relevant viewport sizes, interactions, browser errors, and visual issues. Fix problems found, and report what was verified and any limitations.
 
 ## Pre-Deployment Performance Optimization
 
