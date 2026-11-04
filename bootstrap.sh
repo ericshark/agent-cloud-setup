@@ -17,18 +17,9 @@ if find "$repo_dir/.agents" -type l -print -quit | grep -q .; then
   echo "Source skills must contain actual files, not symlinks" >&2
   exit 1
 fi
-backup_dir=""
 install_file() {
-  local source="$1" destination="$2" relative="$3"
+  local source="$1" destination="$2"
   if [[ -f "$destination" ]] && cmp -s "$source" "$destination"; then return; fi
-  if [[ -e "$destination" || -L "$destination" ]]; then
-    if [[ -z "$backup_dir" ]]; then
-      mkdir -p "$HOME/.agent-cloud-setup/backups"
-      backup_dir="$(mktemp -d "$HOME/.agent-cloud-setup/backups/run.XXXXXXXX")"
-    fi
-    mkdir -p "$backup_dir/$(dirname "$relative")"
-    cp -a -- "$destination" "$backup_dir/$relative"
-  fi
   mkdir -p "$(dirname "$destination")"
   # Replace a destination symlink itself, never write through it.
   local temporary
@@ -37,17 +28,16 @@ install_file() {
   chmod --reference="$source" "$temporary"
   mv -fT -- "$temporary" "$destination"
 }
-install_file "$repo_dir/AGENTS.md" "$codex_home/AGENTS.md" codex/AGENTS.md
-install_file "$repo_dir/CLAUDE.md" "$HOME/.claude/CLAUDE.md" claude/CLAUDE.md
+install_file "$repo_dir/AGENTS.md" "$codex_home/AGENTS.md"
+install_file "$repo_dir/CLAUDE.md" "$HOME/.claude/CLAUDE.md"
 for agent in shared claude; do
   if [[ "$agent" == shared ]]; then destination="$HOME/.agents/skills"; else destination="$HOME/.claude/skills"; fi
   while IFS= read -r -d '' source; do
     relative="${source#"$repo_dir/.agents/skills/"}"
-    install_file "$source" "$destination/$relative" "$agent/skills/$relative"
+    install_file "$source" "$destination/$relative"
   done < <(find "$repo_dir/.agents/skills" -type f -print0)
 done
 printf 'Installed instructions and skills for Codex and Claude.\n'
-if [[ -n "$backup_dir" ]]; then printf 'Previous files backed up to %s\n' "$backup_dir"; fi
 
 # Verify bytes, not just directory existence, before claiming success.
 bash "$repo_dir/verify.sh"
