@@ -1,0 +1,18 @@
+# Build artifacts
+dist/
+*.zip
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Scanner output
+report.md
+report.json
+
+# OS / editor
+.DS_Store
+.idea/
+.vscode/
