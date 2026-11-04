@@ -1,66 +1,96 @@
+
 # Cloud Agent Instructions
 
 ## Code Quality
 
 - Keep changes focused on the request. Avoid unrelated modifications or unnecessary refactoring.
-
-- Add comments when they explain non-obvious behavior, constraints, algorithms, or workarounds.
+- Add comments only when they explain non-obvious behavior, constraints, algorithms, or workarounds.
 
 ## Process Cleanup
 
-Before completing a task:
+- Before completing a task, terminate development servers, watchers, and other long-running processes started during the task unless instructed otherwise.
+- Verify that their ports have been released when practical.
+- Do not leave agent-started servers running unnecessarily.
 
-- Terminate all long-running processes started during the task, including development servers, preview servers, watchers, and temporary background processes unless stated otherwise.
-- Verify that ports used by processes started during the task have been released.
-- Never leave a development server started by the agent running for the user unless stated otherwise.
+## Git and Branching
 
-## Git
+- Inspect the current branch, working tree, and remote before making Git changes. Preserve unrelated work and existing history.
+- If the current branch is `work`, create and switch to a descriptively named `cloud-<feature-name>` branch before making changes.
+- If the current branch is `main`, remain on `main`. If already on another branch, preserve it unless instructed otherwise.
+- Automatically commit focused, completed changes unless explicitly told not to. Stage only relevant files.
+- Run relevant checks when practical. Never commit secrets, unrelated changes, or knowingly broken or incomplete work. Disclose skipped verification.
+- Do not push automatically. Push only when explicitly requested.
+- Never force-push, amend, rewrite history, bypass protections, or merge pull requests without explicit authorization.
+- Report the commit hash, message, branch, and push status after committing.
 
-- Before committing or pushing, verify the current branch and review the changes being staged. Do not overwrite remote changes or discard uncommitted work.
-- Commit focused, completed changes automatically unless asked to leave them uncommitted. Run relevant checks when practical and disclose verification limits if any.
-- Never commit secrets, credentials.
-- Leave incomplete or blocked changes uncommitted and explain why. Ask if commit scope or readiness is unclear.
-- Automatically push each completed commit to the assigned remote branch unless explicitly asked not to push. If the remote branch is unavailable push it or if the push fails, report the blocker.
-- Never force-push, amend commits, rewrite history, or merge pull requests without explicit authorization.
-  -Skipped checks do not automatically prevent a commit; use judgment based on the risk and disclose verification limits.
-- After committing, end the final response commit hash, message, branch, and push status.
+## Push and Deployment
+
+- Use existing GitHub-connected hosting for deployments. Do not install hosting CLIs or create deployment infrastructure during ordinary cloud work.
+- Before pushing, inspect the branch, intended changes, remote updates, and available deployment configuration. Never overwrite remote work.
+
+### Production Branch (`main`)
+
+- Always request explicit confirmation before pushing `main`, regardless of whether hosting is configured.
+- Before asking, report the current branch and any verified existing production URL, or state that no production deployment is confirmed.
+- Ask: **"You are on `main`. Pushing may update production. Would you like to continue?"**
+- After confirmation, safely push the intended changes.
+- If hosting is configured, check the resulting production deployment, commit, URL, and existing CI results. Return the verified production URL and status.
+- If hosting is not configured, simply push and report that no deployment was confirmed.
+- Investigate deployment or CI failures when possible. Never claim success without verification.
+
+### Feature Branches
+
+- When explicitly asked to push a non-production branch, push it to its matching remote branch without merging into `main`.
+- After pushing, check GitHub Deployments and commit checks for the Vercel preview associated with the pushed commit.
+- Wait for deployment completion when practical, then return the verified preview URL and status.
+- Do not require the Vercel CLI or create an additional GitHub Actions workflow.
+- If no preview deployment is configured, found, or verifiable, report that clearly. A successful Git push does not guarantee a deployment.
+- If Git push access is unavailable, report the blocker and any supported alternative.
+
+### Explicit Deployment Requests
+
+- "Preview it" does not authorize an implicit Git push. Check an existing preview, or ask permission to push the branch if necessary.
+- "Deploy it", "ship it", or "release it" means production.
+- If production is requested from a feature branch, ask for confirmation before integrating the changes into `main`. Never silently merge or deploy a feature branch to production.
+- If the required hosting integration or permissions are unavailable, report the limitation rather than installing tools or changing infrastructure.
 
 ## Verification
 
-- Run the relevant existing checks for the code changed when practical.
-- Do not claim a test, build, lint, or type check passed unless it was actually run.
+- Run relevant existing lint, type checks, tests, and builds when practical.
 - Fix issues introduced by the task.
-- If verification cannot be completed, clearly state what was not verified and why.
+- Never claim a check passed unless it actually ran.
+- Clearly report skipped or incomplete verification.
 
 ## Clarification
 
-- Before starting a substantial or ambiguous task, consider whether a few clarifying questions would improve the outcome.
-- Ask concise, relevant questions about requirements, expected behavior, scope, or important design decisions.
-- For straightforward tasks or minor uncertainties, make reasonable assumptions and proceed.
-- Avoid unnecessary questions when the answer is clear from the request or existing codebase.
+- Ask concise questions when important requirements, scope, or safety decisions are unclear.
+- Otherwise, make reasonable assumptions and proceed without unnecessary interruptions.
 
 ## Completion
 
-- When finished, give a summary of what you did, what you verified, and any important issues or limitations.
-- If a check failed or a step was skipped, say so plainly.
+- Summarize changes, verification results, and important issues.
+- Include commit hash, message, branch, and push status when relevant.
+- After pushing, include the verified preview or production URL and deployment status when available.
 - Include the pull-request URL if one was created.
+- Clearly report failed or skipped checks and unresolved limitations.
 
-## Environment limitations
+## Environment Limitations
 
-- If required dependencies, services, credentials, or network access are unavailable, use supported alternatives when appropriate. Do not modify project configuration solely to work around cloud environment limitations. Report anything that could not be verified.
+- Use available tools and permissions. If something is unavailable, explain the blocker and what is needed.
+- Do not modify project configuration merely to work around cloud limitations.
+- Never expose secrets, incur charges, or make destructive production changes without approval.
 
 ## UI Verification
 
-- Use the available Playwright skill for substantial UI changes, and at the end of a project or major feature that affects the UI. Run it headlessly with `PW_HEADLESS=true`.
-- For small or routine changes, do not invoke Playwright automatically; use judgment based on the change and its risk. Verify earlier when needed to resolve uncertainty, investigate a problem, or when the user requests browser testing.
-- When using Playwright, check relevant viewport sizes, interactions, browser errors, and visual issues. Fix problems found, and report what was verified and any limitations.
+- Use the available Playwright skill for substantial UI changes and at the end of a project or major feature affecting the UI. Run headlessly with `PW_HEADLESS=true`.
+- For minor UI changes, use judgment rather than invoking Playwright automatically.
+- Check relevant viewport sizes, interactions, browser errors, and visual issues. Fix problems and report verification results.
 
 ## Pre-Deployment Performance Optimization
 
-- Only invoke the `performance` skill when explicitly requested by the user.
-- When invoked, audit the production build using the skill and available tools, including Lighthouse and Chrome DevTools MCP when available and appropriate.
-- Identify, prioritize, and implement high-impact optimizations for loading speed, responsiveness, rendering, animations, and resource usage.
-- Preserve the existing design, visual quality, interactions, and functionality.
-- Avoid speculative micro-optimizations, unnecessary refactoring, and negligible improvements. Stop when further improvements are marginal.
-- Re-run relevant audits, Playwright verification, and existing project checks after changes. Fix regressions and report before-and-after metrics and remaining significant issues.
-- Do not claim production readiness unless the relevant checks have passed; report anything that could not be verified.
+- Invoke the `performance` skill only when explicitly requested.
+- When invoked, audit the production build using available tools, including Lighthouse and Chrome DevTools MCP when appropriate.
+- Prioritize high-impact improvements to loading, responsiveness, rendering, animations, and resource usage.
+- Preserve existing design and functionality. Avoid unnecessary refactoring and negligible optimizations.
+- Re-run relevant audits, Playwright verification, and project checks. Report before-and-after metrics and unresolved issues.
+- Do not claim production readiness unless relevant checks have passed.
